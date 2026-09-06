@@ -16,8 +16,8 @@ __pycache__/
 *$py.class
 
 # Models and data
-data/
-models/
+/data/
+/models/
 *.pkl
 *.model
 *.joblib
