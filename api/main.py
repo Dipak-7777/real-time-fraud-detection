@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional
+from sqlalchemy.orm import Session
 import time
 import sys
 import os
@@ -9,6 +10,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.models.predict import FraudPredictor
+from src.data.database import get_db, init_db, Transaction
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -122,9 +124,9 @@ async def model_info():
     }
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict(transaction: TransactionRequest):
+async def predict(transaction: TransactionRequest, db: Session = Depends(get_db)):
     """
-    Make a fraud prediction on a transaction.
+    Make a fraud prediction on a transaction and store it in the database.
 
     Returns:
         - prediction: "FRAUD" or "LEGITIMATE"
@@ -145,6 +147,19 @@ async def predict(transaction: TransactionRequest):
         # Calculate latency
         latency_ms = (time.time() - start_time) * 1000
 
+        # Store prediction in database
+        db_transaction = Transaction(
+            transaction_id=transaction.transaction_id,
+            amount=transaction.Amount,
+            prediction=result["prediction"],
+            fraud_probability=result["fraud_probability"],
+            risk_level=result["risk_level"],
+            model_version=result["model_version"],
+            latency_ms=round(latency_ms, 2)
+        )
+        db.add(db_transaction)
+        db.commit()
+
         # Build response
         return PredictionResponse(
             transaction_id=transaction.transaction_id,
@@ -156,7 +171,43 @@ async def predict(transaction: TransactionRequest):
         )
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
+@app.get("/transactions")
+async def get_transactions(limit: int = 10, db: Session = Depends(get_db)):
+    """
+    Retrieve recent transactions from the database.
+
+    Args:
+        limit: Number of transactions to return (default 10, max 100)
+    """
+    if limit > 100:
+        limit = 100
+
+    transactions = db.query(Transaction).order_by(Transaction.created_at.desc()).limit(limit).all()
+
+    return {
+        "count": len(transactions),
+        "transactions": [
+            {
+                "transaction_id": t.transaction_id,
+                "amount": t.amount,
+                "prediction": t.prediction,
+                "fraud_probability": t.fraud_probability,
+                "risk_level": t.risk_level,
+                "latency_ms": t.latency_ms,
+                "timestamp": t.timestamp.isoformat()
+            }
+            for t in transactions
+        ]
+    }
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on API startup."""
+    init_db()
 
 if __name__ == "__main__":
     import uvicorn
