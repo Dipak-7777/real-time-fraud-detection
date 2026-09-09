@@ -38,7 +38,7 @@ def test_predict_endpoint_with_valid_data():
     timestamp = int(time.time() * 1000)
     transaction = {
         "transaction_id": f"TEST{timestamp}",  # Unique ID using timestamp
-        "Amount": 150.0,
+        "amount": 150.0,
         "V1": 0.0, "V2": 0.0, "V3": 0.0, "V4": 0.0, "V5": 0.0,
         "V6": 0.0, "V7": 0.0, "V8": 0.0, "V9": 0.0, "V10": 0.0,
         "V11": 0.0, "V12": 0.0, "V13": 0.0, "V14": 0.0, "V15": 0.0,
@@ -84,7 +84,7 @@ def test_predict_endpoint_with_negative_amount():
     """Test /predict rejects negative amounts"""
     transaction = {
         "transaction_id": "TEST003",
-        "Amount": -50.0,  # Invalid negative amount
+        "amount": -50.0,  # Invalid negative amount
         "V1": 0.0, "V2": 0.0, "V3": 0.0, "V4": 0.0, "V5": 0.0,
         "V6": 0.0, "V7": 0.0, "V8": 0.0, "V9": 0.0, "V10": 0.0,
         "V11": 0.0, "V12": 0.0, "V13": 0.0, "V14": 0.0, "V15": 0.0,

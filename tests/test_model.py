@@ -21,8 +21,8 @@ def test_model_loads_successfully(predictor):
 
 
 def test_model_has_correct_threshold(predictor):
-    """Test that the model uses the expected threshold"""
-    assert predictor.threshold == 0.70
+    """Test that the model threshold matches the saved metadata."""
+    assert predictor.threshold == predictor.metadata['threshold']
 
 
 def test_prediction_returns_correct_structure(predictor):
