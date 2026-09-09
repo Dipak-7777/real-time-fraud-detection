@@ -45,15 +45,16 @@ with st.sidebar:
     st.markdown("---")
 
     # Auto-refresh
-    auto_refresh = st.checkbox("Auto-refresh (5s)", value=False)
+    auto_refresh = st.checkbox("Auto-refresh (5s)", value=True)
 
     # Manual refresh button
     if st.button("🔄 Refresh Now"):
         st.rerun()
 
-# Fetch transactions
+# Fetch transactions with cache-busting timestamp
 try:
-    response = requests.get(f"{API_URL}/transactions?limit=100", timeout=5)
+    # Adding a timestamp 't' prevents the browser/server from caching the response
+    response = requests.get(f"{API_URL}/transactions?limit=100&t={time.time()}", timeout=5)
 
     if response.status_code != 200:
         st.error(f"❌ API returned status {response.status_code}")
@@ -61,32 +62,28 @@ try:
 
     data = response.json()
 
-    st.sidebar.markdown("---")
-    st.sidebar.write(f"📊 **Data Status**")
-    st.sidebar.write(f"Transactions found: **{data['count']}**")
+    # Convert to DataFrame immediately
+    df = pd.DataFrame(data['transactions'])
 
-    if data['count'] == 0:
-        st.warning("⚠️ No transactions in database yet!")
-        st.info("Run the simulator to generate transactions:")
-        st.code("uv run python scripts/simulate_transactions.py", language="bash")
+    if df.empty:
+        st.warning("⚠️ No transactions found in database yet!")
         st.stop()
 
-    # Convert to DataFrame
-    df = pd.DataFrame(data['transactions'])
     df['timestamp'] = pd.to_datetime(df['timestamp'])
-
     st.sidebar.success(f"✅ Loaded {len(df)} rows")
 
 except Exception as e:
     st.error(f"❌ Error fetching data: {str(e)}")
     st.stop()
 
+# --- ALL VISUALIZATIONS NOW OUTSIDE THE TRY BLOCK ---
+
 # Calculate metrics
 total_transactions = len(df)
 fraud_count = len(df[df['prediction'] == 'FRAUD'])
 legitimate_count = len(df[df['prediction'] == 'LEGITIMATE'])
 fraud_rate = (fraud_count / total_transactions * 100) if total_transactions > 0 else 0
-avg_latency = df['latency_ms'].mean()
+avg_latency = df['latency_ms'].mean() if not df.empty else 0
 
 # === SECTION 1: KEY METRICS ===
 st.header("📊 Key Metrics")
@@ -116,7 +113,6 @@ st.header("📋 Recent Transactions (Last 20)")
 recent_df = df.head(20).copy()
 recent_df['time'] = recent_df['timestamp'].dt.strftime('%H:%M:%S')
 
-# Display simplified table
 display_cols = ['transaction_id', 'time', 'amount', 'prediction', 'fraud_probability', 'risk_level', 'latency_ms']
 st.dataframe(
     recent_df[display_cols],
@@ -135,10 +131,7 @@ fig_pie = go.Figure(data=[go.Pie(
     marker=dict(colors=['#00cc00', '#ff4b4b']),
     hole=0.4
 )])
-fig_pie.update_layout(
-    title="Fraud vs Legitimate",
-    height=400
-)
+fig_pie.update_layout(title="Fraud vs Legitimate", height=400)
 st.plotly_chart(fig_pie, use_container_width=True)
 
 st.markdown("---")

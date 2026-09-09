@@ -28,7 +28,7 @@ print("✅ Model loaded and ready!")
 class TransactionRequest(BaseModel):
     """Transaction data for fraud prediction."""
     transaction_id: str = Field(..., description="Unique transaction identifier")
-    Amount: float = Field(..., ge=0, description="Transaction amount in dollars")
+    amount: float = Field(..., ge=0, description="Transaction amount in dollars")
 
     # All V columns from the Kaggle dataset (anonymized PCA features)
     V1: float = 0.0
@@ -71,7 +71,7 @@ class TransactionRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "transaction_id": "TXN123456",
-                "Amount": 250.75,
+                "amount": 250.75,
                 "V1": -0.5,
                 "V2": 0.8,
                 "hour_of_day": 14,
@@ -150,7 +150,7 @@ async def predict(transaction: TransactionRequest, db: Session = Depends(get_db)
         # Store prediction in database
         db_transaction = Transaction(
             transaction_id=transaction.transaction_id,
-            amount=transaction.Amount,
+            amount=transaction.amount,
             prediction=result["prediction"],
             fraud_probability=result["fraud_probability"],
             risk_level=result["risk_level"],

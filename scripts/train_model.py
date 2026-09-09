@@ -45,8 +45,9 @@ def train_and_save_model():
     print("4. Evaluating model performance...")
     y_pred_proba = model.predict_proba(X_test)[:, 1]
 
-    # Use the optimized threshold from Phase 8
-    OPTIMAL_THRESHOLD = 0.95
+    # Use a practical threshold for demo purposes
+    # In production, this would be tuned based on business cost of false positives vs false negatives
+    OPTIMAL_THRESHOLD = 0.70  # 70% confidence threshold
     y_pred = (y_pred_proba >= OPTIMAL_THRESHOLD).astype(int)
 
     precision = precision_score(y_test, y_pred)

@@ -30,11 +30,35 @@ class FraudPredictor:
         Returns:
             dict: Prediction result with fraud probability, label, and risk level
         """
-        # Convert to DataFrame with correct feature order
+        # Convert to DataFrame
         df = pd.DataFrame([transaction_data])
 
-        # Ensure features match training order
-        df = df[self.feature_names]
+        # Map API lowercase 'amount' to model uppercase 'Amount'
+        if 'amount' in df.columns and 'Amount' not in df.columns:
+            df = df.rename(columns={'amount': 'Amount'})
+
+        # Feature Engineering: Calculate amount_log if missing or NaN
+        if 'Amount' in df.columns:
+            # Ensure Amount is numeric
+            df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce').fillna(0.0)
+            # Calculate log1p
+            df['amount_log'] = np.log1p(df['Amount'])
+
+        # Ensure all required features are present
+        for feature in self.feature_names:
+            if feature not in df.columns:
+                df[feature] = 0.0
+
+        # FORCE all features to be numeric. This is the critical fix for the 'object' dtype error.
+        # we use apply(pd.to_numeric) to ensure every column is converted, then fill any new NaNs
+        df = df[self.feature_names].copy()
+        for col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+
+        df = df.astype(float)
+
+        # DEBUG: Print dtypes to server console to verify fix
+        # print(f"DEBUG: Input features dtypes:\n{df.dtypes}")
 
         # Get fraud probability
         fraud_probability = self.model.predict_proba(df)[0, 1]
