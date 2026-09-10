@@ -1,6 +1,6 @@
 # 🛡️ Real-Time Fraud Detection System
 
-[![CI Pipeline](https://github.com/yourusername/real-time-fraud-detection/actions/workflows/pipeline.yml/badge.svg)](https://github.com/yourusername/real-time-fraud-detection/actions)
+[![CI Pipeline](https://github.com/Dipak-7777/real-time-fraud-detection/actions/workflows/pipeline.yml/badge.svg)](https://github.com/Dipak-7777/real-time-fraud-detection/actions)
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![XGBoost](https://img.shields.io/badge/ML-XGBoost-orange)
 ![FastAPI](https://img.shields.io/badge/API-FastAPI-green)
@@ -167,4 +167,5 @@ uv run python scripts/simulate_transactions.py
 - GitHub: [@Dipak-7777](https://github.com/Dipak-7777)
 - LinkedIn: [https://www.linkedin.com/in/dipak-kumar-das-8627b9217?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app]
 - Email: kumardasdipak87@gmail.com
+
 **Built with ❤️ for production ML systems.**
